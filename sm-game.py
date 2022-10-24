@@ -3,14 +3,18 @@ import pygame
 import time
 pygame.init()
 
+Version = 2.0
+
 black = 0, 0, 0
 white = 255, 255, 255
 red = 255, 0, 0
 
+font = pygame.font.Font(pygame.font.get_default_font(), 30)
+
 
 class DisplayMgr:
   def __init__(self):
-    self.appSurf = pygame.display.set_mode((1024, 768))
+    self.appSurf = pygame.display.set_mode((1200, 768))
     self.appRect = self.appSurf.get_rect()
     self.gameSurf = pygame.Surface((self.appRect.width, self.appRect.height-200))
     self.consoleSurf = pygame.Surface((self.appRect.width, 200))
@@ -18,6 +22,8 @@ class DisplayMgr:
   def clearAll(self):
     self.gameSurf.fill(black)
     self.consoleSurf.fill(white)
+    verText = pygame.font.Font.render(font, "Version " + str(Version), True, black)
+    dMgr.consoleSurf.blit(verText, dest=(self.consoleSurf.get_rect().width - verText.get_rect().width, self.consoleSurf.get_rect().height - verText.get_rect().height))
   
   def blitAll(self):
     self.appSurf.blit(self.gameSurf, dest=(0, 0))
@@ -29,7 +35,6 @@ class Player:
   def __init__(self, img):
     self.skinSurfOriginal = pygame.image.load(img)
     
-    #self.skinSurf = pygame.transform.rotozoom(self.skinSurfOriginal,  0.0, 0.25)
     self.skinSurf = pygame.transform.smoothscale(self.skinSurfOriginal,  (100, 100))
     self.skinSurfRect = self.skinSurf.get_rect()
     
@@ -48,34 +53,24 @@ frame = 0
 
 
 myPlayer = Player("car.png")
-myPlayer.skinSurfRect.move_ip(512, dMgr.gameSurf.get_rect().height - myPlayer.skinSurfRect.height)
+myPlayer.skinSurfRect.move_ip(600, dMgr.gameSurf.get_rect().height - myPlayer.skinSurfRect.height)
 obstable = Player("traffic-cone.png")
-obstable.skinSurfRect.move_ip(512, 0)
+obstable.skinSurfRect.move_ip(600, 0)
+obstable2 = Player("tree.png")
+obstable2.skinSurfRect.move_ip(800, 0)
 
-#scale(surface, size, dest_surface=None)
-#pygame.transform.scale(car, (128,128), car2)
-
-
-font = pygame.font.Font(pygame.font.get_default_font(), 36)
-#render(text, antialias, color, background=None) -> Surface
-myText = pygame.font.Font.render(font, "x.x", True, (255, 255, 255))
-
-color0 = 200, 200, 200
-color1 = 255, 255, 255
-
-
-  
+obstaclePassed = 0  
 obsMoveY = 5
 
 while 1:
 
-  if myPlayer.skinSurfRect.colliderect(obstable.skinSurfRect):
+  if (myPlayer.skinSurfRect.collidelist((obstable.skinSurfRect, obstable2.skinSurfRect)) != -1):
+  #if myPlayer.skinSurfRect.collidelist((obstable.skinSurfRect)):
     gameOver(frame, dMgr)
     
   moveX = 0
   for event in pygame.event.get():
     if event.type == pygame.QUIT: 
-      #sys.exit()
       gameOver(0, dMgr)
     if event.type == pygame.KEYDOWN:
       if event.key == pygame.K_RIGHT:
@@ -86,13 +81,6 @@ while 1:
   pygame.time.Clock().tick(60.0)
   
   dMgr.clearAll()
-
-  #color1 = color0
-  #if (frame % 2):
-  #  color0 = white
-  #else:
-  #  color0 = black
-  #screen.fill(color0)
 
   myPlayer.skinSurfRect.move_ip(moveX, 0)
   if (myPlayer.skinSurfRect.x < 0):
@@ -105,17 +93,23 @@ while 1:
     obstable.skinSurfRect.y = 0  
     obsMoveY = obsMoveY + 3
     obstable.skinSurfRect.x = myPlayer.skinSurfRect.x
+
+  obstable2.skinSurfRect.move_ip(0, obsMoveY)
+  if (  obstable2.skinSurfRect.y > dMgr.gameSurf.get_rect().height):
+    obstable2.skinSurfRect.y = 0  
+    #obsMoveY = obsMoveY + 3
+    obstable2.skinSurfRect.x = obstable.skinSurfRect.x -100
   
-  # Blit player
+  # Game Surface Blits
   dMgr.gameSurf.blit(myPlayer.skinSurf, dest=myPlayer.skinSurfRect)
   dMgr.gameSurf.blit(obstable.skinSurf, dest=obstable.skinSurfRect)
+  dMgr.gameSurf.blit(obstable2.skinSurf, dest=obstable2.skinSurfRect)
 
+  # Console Blits
   myText = pygame.font.Font.render(font, "Frame #" + str(frame), True, red)
   dMgr.consoleSurf.blit(myText, dest=(10, 10))
 
   
-  #Surface((width, height), flags=0, depth=0, masks=None)
-  #surf = pygame.Surface((100, 100))
   dMgr.blitAll()
   pygame.display.flip()
   frame = frame + 1
